@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -27,8 +28,10 @@ import androidx.core.view.WindowInsetsControllerCompat
 class LockScreenActivity : ComponentActivity() {
     private var shouldFinish by mutableStateOf(false)
 
-    private val unlockReceiver = BroadcastReceiver { _, _ ->
-        shouldFinish = true
+    private val unlockReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            shouldFinish = true
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

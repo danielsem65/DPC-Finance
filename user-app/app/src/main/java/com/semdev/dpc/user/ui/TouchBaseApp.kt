@@ -51,7 +51,7 @@ fun TouchBaseApp() {
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
-            }
+            )
         }
     ) { padding ->
         Column(

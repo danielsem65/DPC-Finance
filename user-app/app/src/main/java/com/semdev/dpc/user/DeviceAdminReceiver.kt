@@ -1,6 +1,7 @@
 package com.semdev.dpc.user
 
 import android.app.admin.DeviceAdminReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -14,15 +15,19 @@ class DeviceAdminReceiver : DeviceAdminReceiver() {
         Log.d(TAG, "Device admin disabled")
     }
 
-    override fun onDisableRequested(context: Context, intent: Intent): CharSequence {
-        return "This app manages your device. Uninstalling will unlock it but erase all managed data."
+    override fun onLockTaskModeEntering(context: Context, intent: Intent, pkg: String) {
+        Log.d(TAG, "Lock task mode entering: $pkg")
     }
 
-    override fun onProfileProvisioningComplete(context: Context, intent: Intent) {
-        Log.d(TAG, "Profile provisioning complete")
+    override fun onLockTaskModeExiting(context: Context, intent: Intent) {
+        Log.d(TAG, "Lock task mode exiting")
     }
 
     companion object {
-        const val TAG = "TouchBase-DeviceAdmin"
+        private const val TAG = "DeviceAdminReceiver"
+
+        fun getComponentName(context: Context): ComponentName {
+            return ComponentName(context, DeviceAdminReceiver::class.java)
+        }
     }
 }

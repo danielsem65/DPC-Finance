@@ -1,12 +1,14 @@
 package com.semdev.dpc.user
 
-import android.app.admin.DevicePolicyManager
-import android.content.ComponentName
+import android.app.KeyguardManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -14,109 +16,87 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semdev.dpc.user.firestore.DeviceRepository
-import com.semdev.dpc.user.ui.theme.TouchBaseTheme
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 class LockScreenActivity : ComponentActivity() {
+    private var shouldFinish by mutableStateOf(false)
+
+    private val unlockReceiver = BroadcastReceiver { _, _ ->
+        shouldFinish = true
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
-        setContent {
-            TouchBaseTheme(darkTheme = true) {
-                LockScreenContent()
-            }
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
+
+        registerReceiver(unlockReceiver, IntentFilter("com.semdev.dpc.user.ACTION_UNLOCK"), RECEIVER_NOT_EXPORTED)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setTurnScreenOn(true)
+            setShowWhenLocked(true)
+            val km = getSystemService(KeyguardManager::class.java)
+            km.requestDismissKeyguard(this, null)
         }
+
+        setContent {
+            LockScreenContent()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (shouldFinish) {
+            finishAndRemoveTask()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try { unregisterReceiver(unlockReceiver) } catch (_: Exception) {}
     }
 
     @Composable
     private fun LockScreenContent() {
-        val context = LocalContext.current
-        val dpm = remember {
-            context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+        LaunchedEffect(shouldFinish) {
+            if (shouldFinish) {
+                finishAndRemoveTask()
+            }
         }
-        val adminName = remember { ComponentName(context, DeviceAdminReceiver::class.java) }
-        var isUnlocking by remember { mutableStateOf(false) }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFD32F2F)),
+                .background(Color(0xFF1A237E)),
             contentAlignment = Alignment.Center
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(32.dp)
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("🔒", fontSize = 72.sp)
+                Spacer(Modifier.height(24.dp))
                 Text(
-                    text = "⚠",
-                    fontSize = 72.sp
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "Device Locked",
+                    "Device Locked",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
                 Text(
-                    text = "This device has been locked by your administrator.\nContact support to restore access.",
+                    "This device has been remotely locked.\nContact your administrator.",
                     fontSize = 16.sp,
-                    color = Color.White.copy(alpha = 0.85f),
+                    color = Color.White.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(48.dp))
-
-                Button(
-                    onClick = {
-                        isUnlocking = true
-                        dpm.setKeyguardDisabled(adminName, false)
-                        DeviceRepository.updateLockStatus(context, false)
-                        finish()
-                    },
-                    enabled = !isUnlocking,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color(0xFFD32F2F)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                ) {
-                    Text(
-                        text = if (isUnlocking) "Unlocking..." else "Unlock Device",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedButton(
-                    onClick = { /* Emergency call intent */ },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.White
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                ) {
-                    Text(
-                        text = "Emergency Call",
-                        fontSize = 16.sp
-                    )
-                }
             }
         }
     }

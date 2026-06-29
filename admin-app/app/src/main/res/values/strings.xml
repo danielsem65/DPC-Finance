@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">TouchBase Admin</string>
+    <string name="login_title">TouchBase Admin</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Sign In</string>
+    <string name="logging_in">Signing in…</string>
+    <string name="dashboard_title">Devices</string>
+    <string name="no_devices">No devices enrolled yet</string>
+    <string name="device_detail_title">Device Details</string>
+    <string name="command_lock">LOCK</string>
+    <string name="command_unlock">UNLOCK</string>
+    <string name="command_reboot">REBOOT</string>
+    <string name="command_wipe">WIPE</string>
+    <string name="qr_provision_title">Provision New Device</string>
+    <string name="qr_generate">Generate QR Code</string>
+    <string name="qr_info">Scan this QR code on a factory-reset device</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_provision">Provision</string>
+    <string name="nav_logout">Logout</string>
 </resources>

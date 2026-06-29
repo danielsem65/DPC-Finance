@@ -1,8 +1,8 @@
 package com.semdev.dpc.admin.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,139 +12,107 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semdev.dpc.admin.firestore.AdminRepository
-import com.semdev.dpc.admin.firestore.Device
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
+
+data class CommandAction(val label: String, val type: String, val color: Color)
+
+private val commands = listOf(
+    CommandAction("LOCK", "LOCK", Color(0xFFF44336)),
+    CommandAction("UNLOCK", "UNLOCK", Color(0xFF4CAF50)),
+    CommandAction("REBOOT", "REBOOT", Color(0xFFFF9800)),
+    CommandAction("WIPE", "WIPE", Color(0xFF000000)),
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceDetailScreen(deviceId: String, onBack: () -> Unit) {
-    var device by remember { mutableStateOf<Device?>(null) }
-    var loading by remember { mutableStateOf(true) }
-    var commandLoading by remember { mutableStateOf(false) }
-    var feedback by remember { mutableStateOf<String?>(null) }
+fun DeviceDetailScreen(
+    deviceId: String,
+    onBack: () -> Unit
+) {
+    var device by remember { mutableStateOf<Map<String, Any?>?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var sending by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
 
     LaunchedEffect(deviceId) {
-        device = AdminRepository.getDevice(deviceId)
-        loading = false
-    }
-
-    fun sendCommand(type: String) {
-        commandLoading = true
-        feedback = null
-        scope.launch {
-            val success = AdminRepository.sendCommand(deviceId, type)
-            commandLoading = false
-            feedback = if (success) "Command '$type' sent successfully"
-            else "Failed to send command '$type'"
-        }
+        val result = AdminRepository.getDevice(deviceId)
+        result.fold(
+            onSuccess = { device = it; isLoading = false },
+            onFailure = { isLoading = false; message = "Failed to load device" }
+        )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Device Control") },
+                title = { Text("Device Details") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
+                    TextButton(onClick = onBack) { Text("Back") }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            if (loading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (device == null) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        Icons.Default.ErrorOutline,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Device not found", fontSize = 18.sp)
+        if (isLoading) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (device == null) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text("Device not found", color = MaterialTheme.colorScheme.error)
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(device!!["model"] as? String ?: "Unknown", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(8.dp))
+                        DetailRow("Device ID", device!!["id"] as? String ?: "\u2014")
+                        DetailRow("Locked", if ((device!!["locked"] as? Boolean) == true) "Yes" else "No")
+                        DetailRow("Last Seen", formatTimestamp(device!!["lastSeen"] as? Long))
+                        DetailRow("Locked By", device!!["lockedBy"] as? String ?: "\u2014")
+                    }
                 }
-            } else {
-                val d = device!!
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp)
-                ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                Spacer(Modifier.height(24.dp))
+                Text("Commands", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(12.dp))
+                commands.forEach { cmd ->
+                    Button(
+                        onClick = {
+                            sending = cmd.type
+                            scope.launch {
+                                val email = AdminRepository.getCurrentUser()?.email ?: "admin"
+                                val result = AdminRepository.sendCommand(deviceId, cmd.type, email)
+                                sending = null
+                                message = if (result.isSuccess) "${cmd.type} command sent" else "Failed: ${result.exceptionOrNull()?.message}"
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = cmd.color),
+                        enabled = sending != cmd.type
                     ) {
-                        Column(modifier = Modifier.padding(20.dp)) {
-                            Text("Device Info", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            InfoRow("Model", d.model.ifBlank { "Unknown" })
-                            InfoRow("Device ID", d.deviceId)
-                            InfoRow("Status", if (d.locked) "Locked" else "Unlocked")
-                            InfoRow(
-                                "Last Seen",
-                                dateFormat.format(Date(d.lastSeen))
-                            )
+                        if (sending == cmd.type) {
+                            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
+                        } else {
+                            Text(cmd.label, fontWeight = FontWeight.Bold)
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text("Commands", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    CommandButton(
-                        text = "LOCK DEVICE",
-                        icon = Icons.Default.Lock,
-                        color = Color(0xFFD32F2F),
-                        enabled = !commandLoading,
-                        onClick = { sendCommand("LOCK") }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    CommandButton(
-                        text = "UNLOCK DEVICE",
-                        icon = Icons.Default.LockOpen,
-                        color = Color(0xFF388E3C),
-                        enabled = !commandLoading,
-                        onClick = { sendCommand("UNLOCK") }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    CommandButton(
-                        text = "REBOOT DEVICE",
-                        icon = Icons.Default.RestartAlt,
-                        color = Color(0xFFF57C00),
-                        enabled = !commandLoading,
-                        onClick = { sendCommand("REBOOT") }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    CommandButton(
-                        text = "FACTORY RESET",
-                        icon = Icons.Default.DeleteForever,
-                        color = Color(0xFFB71C1C),
-                        enabled = !commandLoading,
-                        onClick = { sendCommand("WIPE") }
-                    )
-
-                    if (feedback != null) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = feedback!!,
-                            color = if (feedback!!.startsWith("Failed"))
-                                MaterialTheme.colorScheme.error
-                            else
-                                Color(0xFF388E3C),
-                            fontSize = 14.sp
-                        )
+                }
+                if (message != null) {
+                    Spacer(Modifier.height(16.dp))
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        Text(message!!, modifier = Modifier.padding(12.dp), fontSize = 13.sp)
                     }
                 }
             }
@@ -153,43 +121,15 @@ fun DeviceDetailScreen(deviceId: String, onBack: () -> Unit) {
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Text(
-            text = "$label: ",
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            fontSize = 14.sp
-        )
+private fun DetailRow(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        Text("$label: ", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+        Text(value, fontSize = 14.sp)
     }
 }
 
-@Composable
-private fun CommandButton(
-    text: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    color: Color,
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        colors = ButtonDefaults.buttonColors(containerColor = color),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-    ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-    }
+private fun formatTimestamp(millis: Long?): String {
+    if (millis == null) return "\u2014"
+    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+    return sdf.format(java.util.Date(millis))
 }

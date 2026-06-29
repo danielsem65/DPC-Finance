@@ -5,10 +5,6 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
-/**
- * Triggered when a new command document is written to the 'commands' collection.
- * Sends the command via FCM to the target device.
- */
 exports.onCommandWrite = functions.firestore
     .document('commands/{commandId}')
     .onCreate(async (snap, context) => {
@@ -19,7 +15,6 @@ exports.onCommandWrite = functions.firestore
         functions.logger.info(`Command received: ${commandType} for device ${deviceId}`);
 
         try {
-            // Get the device's FCM token
             const deviceDoc = await db.collection('devices').doc(deviceId).get();
             if (!deviceDoc.exists) {
                 functions.logger.error(`Device ${deviceId} not found`);
@@ -36,19 +31,14 @@ exports.onCommandWrite = functions.firestore
                 return;
             }
 
-            // Build FCM message
             const message = {
                 token: fcmToken,
-                data: {
-                    command: commandType
-                }
+                data: { command: commandType }
             };
 
-            // Send message
             const response = await admin.messaging().send(message);
             functions.logger.info(`FCM sent to ${deviceId}: ${response}`);
 
-            // Update command status
             await snap.ref.update({
                 status: 'sent',
                 fcmMessageId: response,
@@ -65,9 +55,6 @@ exports.onCommandWrite = functions.firestore
         }
     });
 
-/**
- * Health check endpoint
- */
 exports.health = functions.https.onRequest((req, res) => {
     res.status(200).json({ status: 'ok', service: 'TouchBase Functions' });
 });

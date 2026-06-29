@@ -1,82 +1,70 @@
 package com.semdev.dpc.admin.firestore
 
-import android.util.Log
-import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.Source
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import java.util.UUID
-
-data class Device(
-    val deviceId: String = "",
-    val fcmToken: String = "",
-    val locked: Boolean = false,
-    val lastSeen: Long = 0L,
-    val model: String = ""
-)
 
 object AdminRepository {
-    const val TAG = "TouchBase-AdminRepo"
-    private const val COLLECTION_DEVICES = "devices"
-    private const val COLLECTION_COMMANDS = "commands"
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+    private const val DEVICES_COL = "devices"
+    private const val COMMANDS_COL = "commands"
 
-    private val db = com.google.firebase.Firebase.firestore
+    fun getCurrentUser(): FirebaseUser? = auth.currentUser
 
-    suspend fun getDevices(): List<Device> {
+    suspend fun login(email: String, password: String): Result<FirebaseUser> {
         return try {
-            val snapshot = db.collection(COLLECTION_DEVICES)
-                .get(Source.SERVER)
-                .await()
-            snapshot.documents.mapNotNull { doc ->
-                val data = doc.data ?: return@mapNotNull null
-                Device(
-                    deviceId = data["deviceId"] as? String ?: doc.id,
-                    fcmToken = data["fcmToken"] as? String ?: "",
-                    locked = data["locked"] as? Boolean ?: false,
-                    lastSeen = data["lastSeen"] as? Long ?: 0L,
-                    model = data["model"] as? String ?: ""
-                )
+            val result = auth.signInWithEmailAndPassword(email, password).await()
+            Result.success(result.user!!)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun logout() {
+        auth.signOut()
+    }
+
+    suspend fun getDevices(): Result<List<Map<String, Any?>>> {
+        return try {
+            val snapshot = db.collection(DEVICES_COL).get().await()
+            val devices = snapshot.documents.map { doc ->
+                val data = doc.data?.toMutableMap() ?: mutableMapOf()
+                data["id"] = doc.id
+                data
             }
+            Result.success(devices)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get devices", e)
-            emptyList()
+            Result.failure(e)
         }
     }
 
-    suspend fun getDevice(deviceId: String): Device? {
-        return try {
-            val doc = db.collection(COLLECTION_DEVICES).document(deviceId)
-                .get(Source.SERVER)
-                .await()
-            val data = doc.data ?: return null
-            Device(
-                deviceId = data["deviceId"] as? String ?: doc.id,
-                fcmToken = data["fcmToken"] as? String ?: "",
-                locked = data["locked"] as? Boolean ?: false,
-                lastSeen = data["lastSeen"] as? Long ?: 0L,
-                model = data["model"] as? String ?: ""
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to get device $deviceId", e)
-            null
-        }
-    }
-
-    suspend fun sendCommand(deviceId: String, commandType: String): Boolean {
+    suspend fun sendCommand(deviceId: String, commandType: String, adminEmail: String): Result<String> {
         return try {
             val command = hashMapOf(
                 "deviceId" to deviceId,
                 "type" to commandType,
                 "status" to "pending",
-                "createdAt" to System.currentTimeMillis()
+                "createdAt" to FieldValue.serverTimestamp(),
+                "createdBy" to adminEmail
             )
-            db.collection(COLLECTION_COMMANDS)
-                .document(UUID.randomUUID().toString())
-                .set(command)
-                .await()
-            true
+            val ref = db.collection(COMMANDS_COL).add(command).await()
+            Result.success(ref.id)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send command $commandType to $deviceId", e)
-            false
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getDevice(deviceId: String): Result<Map<String, Any?>?> {
+        return try {
+            val doc = db.collection(DEVICES_COL).document(deviceId).get().await()
+            val data = doc.data?.toMutableMap()
+            data?.put("id", doc.id)
+            Result.success(data)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

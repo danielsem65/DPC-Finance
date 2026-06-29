@@ -3,23 +3,22 @@ package com.semdev.dpc.user
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.os.Build
 import com.google.firebase.FirebaseApp
+import com.google.firebase.messaging.FirebaseMessaging
 
 class UserApp : Application() {
     override fun onCreate() {
         super.onCreate()
         FirebaseApp.initializeApp(this)
         createNotificationChannel()
+        FirebaseMessaging.getInstance().isAutoInitEnabled = true
     }
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-            CHANNEL_ID,
-            CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = CHANNEL_DESC
-        }
+            CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH
+        ).apply { description = CHANNEL_DESC }
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
     }

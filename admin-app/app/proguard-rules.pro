@@ -1,3 +1,5 @@
--keep class com.semdev.dpc.admin.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
 -keep class com.google.firebase.** { *; }
+-keep class com.semdev.dpc.** { *; }
 -dontwarn com.google.firebase.**

@@ -45,10 +45,10 @@ object DeviceRepository {
         )
 
         adminExtras?.let { extras ->
-            val provisioning = hashMapOf<String, String>()
-            if (extras.containsKey(EXTRA_DEALER_ID)) provisioning[EXTRA_DEALER_ID] = extras.getString(EXTRA_DEALER_ID, "")
-            if (extras.containsKey(EXTRA_ACCOUNT_ID)) provisioning[EXTRA_ACCOUNT_ID] = extras.getString(EXTRA_ACCOUNT_ID, "")
-            if (extras.containsKey(EXTRA_ACTIVATION_CODE)) provisioning[EXTRA_ACTIVATION_CODE] = extras.getString(EXTRA_ACTIVATION_CODE, "")
+            val provisioning = hashMapOf<String, Any>()
+            extras.getString(EXTRA_DEALER_ID)?.let { if (it.isNotEmpty()) provisioning[EXTRA_DEALER_ID] = it }
+            extras.getString(EXTRA_ACCOUNT_ID)?.let { if (it.isNotEmpty()) provisioning[EXTRA_ACCOUNT_ID] = it }
+            extras.getString(EXTRA_ACTIVATION_CODE)?.let { if (it.isNotEmpty()) provisioning[EXTRA_ACTIVATION_CODE] = it }
             if (provisioning.isNotEmpty()) data[EXTRA_PROVISIONING] = provisioning
         }
 

@@ -57,7 +57,7 @@ fun TouchBaseApp() {
             )
         } else {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.Outlined.Security,
+                imageVector = androidx.compose.material.icons.Icons.Outlined.Lock,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.primary

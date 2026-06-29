@@ -46,7 +46,7 @@ object DeviceRepository {
             Settings.Secure.ANDROID_ID
         )
         db.collection(COLLECTION_DEVICES).document(deviceId)
-            .update(FIELD_FCM_TOKEN to token, FIELD_LAST_SEEN to System.currentTimeMillis())
+            .update(FIELD_FCM_TOKEN, token, FIELD_LAST_SEEN, System.currentTimeMillis())
     }
 
     fun updateLockStatus(context: Context, locked: Boolean) {
@@ -55,6 +55,6 @@ object DeviceRepository {
             Settings.Secure.ANDROID_ID
         )
         db.collection(COLLECTION_DEVICES).document(deviceId)
-            .update(FIELD_LOCKED to locked, FIELD_LAST_SEEN to System.currentTimeMillis())
+            .update(FIELD_LOCKED, locked, FIELD_LAST_SEEN, System.currentTimeMillis())
     }
 }

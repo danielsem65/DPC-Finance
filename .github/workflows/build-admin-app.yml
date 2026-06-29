@@ -3,13 +3,8 @@ name: Build Admin App
 on:
   push:
     branches: [main]
-    paths:
-      - 'admin-app/**'
-      - '.github/workflows/build-admin-app.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'admin-app/**'
   workflow_dispatch:
 
 jobs:

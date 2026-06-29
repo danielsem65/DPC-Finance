@@ -3,13 +3,8 @@ name: Build User App (DPC)
 on:
   push:
     branches: [main]
-    paths:
-      - 'user-app/**'
-      - '.github/workflows/build-user-app.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'user-app/**'
   workflow_dispatch:
 
 jobs:

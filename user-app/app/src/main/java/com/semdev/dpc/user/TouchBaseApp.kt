@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import com.semdev.dpc.user.firestore.DeviceRepository
 
 @Composable
@@ -57,7 +59,7 @@ fun TouchBaseApp() {
             )
         } else {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.Outlined.Lock,
+                imageVector = Icons.Filled.Lock,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.primary

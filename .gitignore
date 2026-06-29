@@ -1,0 +1,16 @@
+*.iml
+.gradle
+/build
+/local.properties
+google-services.json
+.idea
+captures
+.externalNativeBuild
+.cxx
+*.apk
+*.aab
+*.jks
+*.keystore
+local.properties
+/cloudfunction/node_modules
+/functions/node_modules

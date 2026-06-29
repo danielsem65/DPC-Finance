@@ -1,0 +1,3 @@
+-keep class com.semdev.dpc.user.** { *; }
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**

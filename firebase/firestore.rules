@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Devices collection: read by admin, write by user app (device owner)
+    match /devices/{deviceId} {
+      allow read: if request.auth != null && request.auth.uid != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && resource.data.deviceId == deviceId;
+      allow delete: if false;
+    }
+
+    // Commands collection: write by admin, read by cloud functions
+    match /commands/{commandId} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.token.admin == true;
+      allow delete: if false;
+    }
+
+    // Admins collection: admin only
+    match /admins/{adminId} {
+      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -2,6 +2,7 @@ package com.semdev.dpc.user.ui
 
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -19,6 +20,7 @@ import com.semdev.dpc.user.DeviceAdminReceiver
 import com.semdev.dpc.user.firestore.DeviceRepository
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBaseApp() {
     val context = LocalContext.current

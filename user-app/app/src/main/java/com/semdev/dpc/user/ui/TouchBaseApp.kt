@@ -36,7 +36,9 @@ fun TouchBaseApp() {
         try {
             val id = DeviceRepository.getDeviceId(context)
             deviceId = id
-            DeviceRepository.register(context)
+            val activity = context as? android.app.Activity
+            val adminExtras = activity?.intent?.getBundleExtra("android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE")
+            DeviceRepository.register(context, adminExtras)
             isRegistered = true
         } catch (e: Exception) {
             e.printStackTrace()

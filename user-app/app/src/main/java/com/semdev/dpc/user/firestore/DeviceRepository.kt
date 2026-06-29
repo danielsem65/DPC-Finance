@@ -1,8 +1,10 @@
 package com.semdev.dpc.user.firestore
 
 import android.content.Context
+import android.os.Bundle
 import android.provider.Settings
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.tasks.await
 
@@ -13,6 +15,12 @@ object DeviceRepository {
     private const val FIELD_LAST_SEEN = "lastSeen"
     private const val FIELD_MODEL = "model"
     private const val FIELD_DEVICE_ID = "deviceId"
+    private const val EXTRA_PROVISIONING = "provisioning"
+    private const val EXTRA_DEALER_ID = "dealerId"
+    private const val EXTRA_ACCOUNT_ID = "accountId"
+    private const val EXTRA_ACTIVATION_CODE = "activationCode"
+    private const val PREFS_NAME = "touchbase_provisioning"
+    private const val PREF_REGISTERED = "registered"
 
     private val db = FirebaseFirestore.getInstance()
 
@@ -20,7 +28,12 @@ object DeviceRepository {
         return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     }
 
-    suspend fun register(context: Context): String {
+    fun hasRegistered(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(PREF_REGISTERED, false)
+    }
+
+    suspend fun register(context: Context, adminExtras: Bundle? = null): String {
         val deviceId = getDeviceId(context)
         val token = FirebaseMessaging.getInstance().token.await()
         val data = hashMapOf(
@@ -30,9 +43,20 @@ object DeviceRepository {
             FIELD_LAST_SEEN to System.currentTimeMillis(),
             FIELD_MODEL to android.os.Build.MODEL
         )
-        db.collection(COLLECTION).document(deviceId)
-            .set(data)
-            .await()
+
+        adminExtras?.let { extras ->
+            val provisioning = hashMapOf<String, String>()
+            if (extras.containsKey(EXTRA_DEALER_ID)) provisioning[EXTRA_DEALER_ID] = extras.getString(EXTRA_DEALER_ID, "")
+            if (extras.containsKey(EXTRA_ACCOUNT_ID)) provisioning[EXTRA_ACCOUNT_ID] = extras.getString(EXTRA_ACCOUNT_ID, "")
+            if (extras.containsKey(EXTRA_ACTIVATION_CODE)) provisioning[EXTRA_ACTIVATION_CODE] = extras.getString(EXTRA_ACTIVATION_CODE, "")
+            if (provisioning.isNotEmpty()) data[EXTRA_PROVISIONING] = provisioning
+        }
+
+        db.collection(COLLECTION).document(deviceId).set(data, SetOptions.merge()).await()
+
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(PREF_REGISTERED, true).apply()
+
         return deviceId
     }
 

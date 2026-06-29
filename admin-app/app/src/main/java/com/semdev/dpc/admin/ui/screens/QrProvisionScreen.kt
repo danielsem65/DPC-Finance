@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semdev.dpc.admin.ui.QrEncoder
+import java.util.UUID
 
 @Composable
 fun QrProvisionScreen(modifier: Modifier = Modifier) {
@@ -23,7 +24,12 @@ fun QrProvisionScreen(modifier: Modifier = Modifier) {
     var apkUrl by remember {
         mutableStateOf("https://github.com/danielsem65/DPC-Finance/releases/latest/download/user-app.apk")
     }
+    var apkChecksum by remember { mutableStateOf("") }
+    var dealerId by remember { mutableStateOf("dealer-demo-001") }
+    var accountId by remember { mutableStateOf("") }
+    var activationCode by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var rawJson by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = modifier
@@ -50,18 +56,91 @@ fun QrProvisionScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = apkChecksum,
+            onValueChange = { apkChecksum = it },
+            label = { Text("APK SHA-256 Checksum (optional, base64)") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = dealerId,
+            onValueChange = { dealerId = it },
+            label = { Text("Dealer ID") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = accountId,
+            onValueChange = { accountId = it },
+            label = { Text("Account ID (optional)") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = activationCode,
+            onValueChange = { activationCode = it },
+            label = { Text("Activation Code (optional)") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
         Spacer(Modifier.height(16.dp))
 
         Button(
             onClick = {
                 error = null
+                rawJson = null
                 if (apkUrl.isBlank()) {
                     error = "Enter a valid APK URL"
                     return@Button
                 }
                 try {
                     val componentName = "com.semdev.dpc.user/com.semdev.dpc.user.DeviceAdminReceiver"
-                    val json = """{"android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME":"$componentName","android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION":"$apkUrl","android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED":true,"android.app.extra.PROVISIONING_SKIP_EDUCATION_SCREENS":true}"""
+                    val provisioningToken = UUID.randomUUID().toString().replace("-", "")
+                    val deviceId = UUID.randomUUID().toString()
+
+                            val extrasJson = buildString {
+                        append("""{"schemaVersion":"1","provisioningToken":""")
+                        append("\"$provisioningToken\"")
+                        append(""","deviceId":""")
+                        append("\"$deviceId\"")
+                        append(""","dealerId":""")
+                        append("\"$dealerId\"")
+                        if (accountId.isNotBlank()) {
+                            append(""","accountId":""")
+                            append("\"$accountId\"")
+                        }
+                        if (activationCode.isNotBlank()) {
+                            append(""","activationCode":""")
+                            append("\"$activationCode\"")
+                        }
+                        append("}")
+                    }
+
+                    val json = buildString {
+                        append("""{"android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME":""")
+                        append("\"$componentName\"")
+                        append(""","android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION":""")
+                        append("\"$apkUrl\"")
+                        if (apkChecksum.isNotBlank()) {
+                            append(""","android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM":""")
+                            append("\"$apkChecksum\"")
+                        }
+                        append(""","android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED":true""")
+                        append(""","android.app.extra.PROVISIONING_SKIP_EDUCATION_SCREENS":true""")
+                        append(""","android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE":""")
+                        append(extrasJson)
+                        append("}")
+                    }
+                    rawJson = json
                     qrBitmap = QrEncoder.encode(json)
                 } catch (e: Exception) {
                     error = "Failed to generate QR: ${e.message}"
@@ -93,6 +172,13 @@ fun QrProvisionScreen(modifier: Modifier = Modifier) {
                     Text("Scan with device camera", fontSize = 14.sp, color = Color.Gray)
                 }
             }
+            Spacer(Modifier.height(16.dp))
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Column(Modifier.padding(12.dp)) {
+                    Text("Provisioning Token", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text(rawJson?.let { extractProvisioningToken(it) } ?: "", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                }
+            }
         }
 
         Spacer(Modifier.height(24.dp))
@@ -110,4 +196,12 @@ fun QrProvisionScreen(modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+private fun extractProvisioningToken(json: String): String {
+    val key = "\"provisioningToken\":\""
+    val start = json.indexOf(key)
+    if (start == -1) return ""
+    val end = json.indexOf("\"", start + key.length)
+    return if (end == -1) "" else json.substring(start + key.length, end)
 }

@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Bundle
 import android.provider.Settings
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.tasks.await
 
@@ -15,7 +14,6 @@ object DeviceRepository {
     private const val FIELD_LAST_SEEN = "lastSeen"
     private const val FIELD_MODEL = "model"
     private const val FIELD_DEVICE_ID = "deviceId"
-    private const val EXTRA_PROVISIONING = "provisioning"
     private const val EXTRA_DEALER_ID = "dealerId"
     private const val EXTRA_ACCOUNT_ID = "accountId"
     private const val EXTRA_ACTIVATION_CODE = "activationCode"
@@ -36,7 +34,7 @@ object DeviceRepository {
     suspend fun register(context: Context, adminExtras: Bundle? = null): String {
         val deviceId = getDeviceId(context)
         val token = FirebaseMessaging.getInstance().token.await()
-        val data = hashMapOf(
+        val data = hashMapOf<String, Any?>(
             FIELD_DEVICE_ID to deviceId,
             FIELD_TOKEN to token,
             FIELD_LOCKED to false,
@@ -45,14 +43,12 @@ object DeviceRepository {
         )
 
         adminExtras?.let { extras ->
-            val provisioning = hashMapOf<String, Any>()
-            extras.getString(EXTRA_DEALER_ID)?.let { if (it.isNotEmpty()) provisioning[EXTRA_DEALER_ID] = it }
-            extras.getString(EXTRA_ACCOUNT_ID)?.let { if (it.isNotEmpty()) provisioning[EXTRA_ACCOUNT_ID] = it }
-            extras.getString(EXTRA_ACTIVATION_CODE)?.let { if (it.isNotEmpty()) provisioning[EXTRA_ACTIVATION_CODE] = it }
-            if (provisioning.isNotEmpty()) data[EXTRA_PROVISIONING] = provisioning
+            extras.getString(EXTRA_DEALER_ID)?.let { if (it.isNotEmpty()) data["provisioning_$EXTRA_DEALER_ID"] = it }
+            extras.getString(EXTRA_ACCOUNT_ID)?.let { if (it.isNotEmpty()) data["provisioning_$EXTRA_ACCOUNT_ID"] = it }
+            extras.getString(EXTRA_ACTIVATION_CODE)?.let { if (it.isNotEmpty()) data["provisioning_$EXTRA_ACTIVATION_CODE"] = it }
         }
 
-        db.collection(COLLECTION).document(deviceId).set(data, SetOptions.merge()).await()
+        db.collection(COLLECTION).document(deviceId).set(data as Map<String, Any?>).await()
 
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().putBoolean(PREF_REGISTERED, true).apply()

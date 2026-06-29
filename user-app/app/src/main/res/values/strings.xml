@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LockDPC</string>
+    <string name="app_name">TouchBase</string>
     <string name="device_locked_title">Device Locked</string>
     <string name="device_locked_message">This device has been locked by your administrator.</string>
     <string name="unlock_button">Unlock Device</string>
     <string name="emergency_call">Emergency Call</string>
-    <string name="lockdpc_channel_name">LockDPC Commands</string>
-    <string name="lockdpc_channel_desc">Receive remote lock commands</string>
+    <string name="touchbase_channel_name">TouchBase Commands</string>
+    <string name="touchbase_channel_desc">Receive remote lock commands</string>
 </resources>

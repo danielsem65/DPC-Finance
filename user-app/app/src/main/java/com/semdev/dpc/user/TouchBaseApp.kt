@@ -3,7 +3,6 @@ package com.semdev.dpc.user
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
-import android.os.Bundle
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -18,7 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.semdev.dpc.user.firestore.DeviceRepository
 
 @Composable
-fun LockDPCApp() {
+fun TouchBaseApp() {
     val context = LocalContext.current
     val dpm = remember {
         context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
@@ -30,9 +29,9 @@ fun LockDPCApp() {
     LaunchedEffect(Unit) {
         try {
             deviceId = DeviceRepository.registerDevice(context)
-            Log.d("LockDPC", "Device registered: $deviceId")
+            Log.d("TouchBase", "Device registered: $deviceId")
         } catch (e: Exception) {
-            Log.e("LockDPC", "Failed to register device", e)
+            Log.e("TouchBase", "Failed to register device", e)
         }
     }
 
@@ -71,7 +70,7 @@ fun LockDPCApp() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "This device is managed by LockDPC.\nAdministrator controls apply.",
+                text = "This device is managed by TouchBase.\nAdministrator controls apply.",
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

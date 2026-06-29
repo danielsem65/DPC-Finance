@@ -17,6 +17,6 @@ class AdminFCMService : FirebaseMessagingService() {
     }
 
     companion object {
-        const val TAG = "LockDPC-AdminFCM"
+        const val TAG = "TouchBase-AdminFCM"
     }
 }

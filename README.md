@@ -1,4 +1,4 @@
-# LockDPC - Android Device Owner Remote Lock System
+# TouchBase - Android Device Owner Remote Lock System
 
 Two Android apps for managing devices using Android Enterprise Device Owner mode.
 

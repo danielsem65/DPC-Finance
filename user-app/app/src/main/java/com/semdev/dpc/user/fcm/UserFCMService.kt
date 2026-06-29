@@ -55,7 +55,7 @@ class UserFCMService : FirebaseMessagingService() {
     }
 
     companion object {
-        const val TAG = "LockDPC-FCM"
+        const val TAG = "TouchBase-FCM"
         const val CMD_KEY = "command"
         const val CMD_LOCK = "LOCK"
         const val CMD_UNLOCK = "UNLOCK"

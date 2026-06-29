@@ -9,17 +9,17 @@
         android:name=".UserApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="LockDPC"
+        android:label="TouchBase"
         android:supportsRtl="true"
-        android:theme="@style/Theme.LockDPC"
+        android:theme="@style/Theme.TouchBase"
         android:networkSecurityConfig="@xml/network_security_config">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:excludeFromRecents="true"
-            android:label="LockDPC"
-            android:theme="@style/Theme.LockDPC">
+            android:label="TouchBase"
+            android:theme="@style/Theme.TouchBase">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -33,7 +33,7 @@
             android:noHistory="true"
             android:showOnLockScreen="true"
             android:turnScreenOn="true"
-            android:theme="@style/Theme.LockDPC.Fullscreen" />
+            android:theme="@style/Theme.TouchBase.Fullscreen" />
 
         <receiver
             android:name=".DeviceAdminReceiver"
@@ -60,6 +60,6 @@
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="lockdpc_commands" />
+            android:value="touchbase_commands" />
     </application>
 </manifest>

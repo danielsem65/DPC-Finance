@@ -69,5 +69,5 @@ exports.onCommandWrite = functions.firestore
  * Health check endpoint
  */
 exports.health = functions.https.onRequest((req, res) => {
-    res.status(200).json({ status: 'ok', service: 'LockDPC Functions' });
+    res.status(200).json({ status: 'ok', service: 'TouchBase Functions' });
 });

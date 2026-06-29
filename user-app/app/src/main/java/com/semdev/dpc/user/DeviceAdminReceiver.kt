@@ -23,6 +23,6 @@ class DeviceAdminReceiver : DeviceAdminReceiver() {
     }
 
     companion object {
-        const val TAG = "LockDPC-DeviceAdmin"
+        const val TAG = "TouchBase-DeviceAdmin"
     }
 }

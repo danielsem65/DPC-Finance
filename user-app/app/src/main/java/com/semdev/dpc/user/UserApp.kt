@@ -25,8 +25,8 @@ class UserApp : Application() {
     }
 
     companion object {
-        const val CHANNEL_ID = "lockdpc_commands"
-        const val CHANNEL_NAME = "LockDPC Commands"
+        const val CHANNEL_ID = "touchbase_commands"
+        const val CHANNEL_NAME = "TouchBase Commands"
         const val CHANNEL_DESC = "Receive remote lock commands"
     }
 }

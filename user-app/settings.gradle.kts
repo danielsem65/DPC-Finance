@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "LockDPC-User"
+rootProject.name = "TouchBase-User"
 include(":app")

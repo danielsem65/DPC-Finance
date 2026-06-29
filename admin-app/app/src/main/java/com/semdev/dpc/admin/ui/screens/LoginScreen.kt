@@ -32,7 +32,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "LockDPC Admin",
+            text = "TouchBase Admin",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold
         )

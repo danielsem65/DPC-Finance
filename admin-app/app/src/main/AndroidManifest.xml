@@ -8,15 +8,15 @@
         android:name=".AdminApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="LockDPC Admin"
+        android:label="TouchBase Admin"
         android:supportsRtl="true"
-        android:theme="@style/Theme.LockDPC.Admin">
+        android:theme="@style/Theme.TouchBase.Admin">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="LockDPC Admin"
-            android:theme="@style/Theme.LockDPC.Admin">
+            android:label="TouchBase Admin"
+            android:theme="@style/Theme.TouchBase.Admin">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

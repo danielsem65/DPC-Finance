@@ -15,7 +15,7 @@ data class Device(
 )
 
 object AdminRepository {
-    const val TAG = "LockDPC-AdminRepo"
+    const val TAG = "TouchBase-AdminRepo"
     private const val COLLECTION_DEVICES = "devices"
     private const val COLLECTION_COMMANDS = "commands"
 

@@ -63,7 +63,7 @@ jobs:
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: lockdpc-user-app
+          name: touchbase-user-app
           path: |
             user-app/app/build/outputs/apk/debug/*.apk
             user-app/app/build/outputs/apk/release/*.apk

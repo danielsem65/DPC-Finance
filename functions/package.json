@@ -1,6 +1,6 @@
 {
-  "name": "lockdpc-functions",
-  "description": "Firebase Cloud Functions for LockDPC",
+  "name": "touchbase-functions",
+  "description": "Firebase Cloud Functions for TouchBase",
   "scripts": {
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",

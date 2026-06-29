@@ -16,10 +16,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: user-app
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,6 +30,7 @@ jobs:
         uses: gradle/gradle-build-action@v3
 
       - name: Decode google-services.json
+        working-directory: user-app
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_USER_JSON }}
         run: |
@@ -42,7 +39,7 @@ jobs:
           fi
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew -p user-app assembleDebug
 
       - name: Build release APK
         env:
@@ -52,8 +49,9 @@ jobs:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
+            cd user-app
             echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
-            ./gradlew assembleRelease \
+            ../gradlew assembleRelease \
               -Pandroid.injected.signing.store.file=keystore.jks \
               -Pandroid.injected.signing.store.password=$STORE_PASSWORD \
               -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
